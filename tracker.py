@@ -10,7 +10,6 @@ torrents = {}
 class UDPT(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request[0].strip()
-        # print(f"{self.client_address, data}\n")
         socket = self.request[1]
 
         if data[:12] == lib.protocol_id + lib.connect:
@@ -79,6 +78,11 @@ class UDPT(socketserver.BaseRequestHandler):
         return lib.rev_b(c_int32(_seed))
 
 
-HOST, PORT = gethostbyname(gethostname()), 9999
-with socketserver.UDPServer((HOST, PORT), UDPT) as server:
-    server.serve_forever()
+def gethost() -> str:
+    return gethostbyname(gethostname())
+
+def UDPTstart(HOST: str = gethost(), PORT: int = 1212):
+    print("IM HERE")
+    with socketserver.UDPServer((HOST, PORT), UDPT) as server:
+        server.serve_forever()
+    print("QUIT")
