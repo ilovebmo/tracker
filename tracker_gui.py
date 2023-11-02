@@ -11,9 +11,6 @@ import tkinter as tk
 # Logging to logging.log
 logging.basicConfig(filename='logging.log', encoding='utf-8', level=logging.INFO)
 
-# Connections list, stores connection_ids
-connections = []
-
 # Torrents dictionary, stores info_hashes as keys, which map to a dictionary of structure peer_id: Peer
 torrents = {}
 
@@ -42,6 +39,12 @@ class UDPT(socketserver.BaseRequestHandler):
             self._connect(data, socket)
             return
 
+        # Gets the connections from the file
+        connections = []
+        with open("connections", "rb") as c:
+            for n in c.read().split(lib.newline)[:-1]:
+                connections.append(n)
+                
         # Checks if it's a valid connection_id
         if data[:8] in connections:
             # Checks if it's an announce request
@@ -59,9 +62,10 @@ class UDPT(socketserver.BaseRequestHandler):
 
     # Method for handling the initial connection
     def _connect(self, data: bytes, socket: socketserver.socket):
-        # Creates a random connection_id and stores it in the connections list
+        # Creates a random connection_id and stores it in the connections file
         cid = lib.connection_id()
-        connections.append(cid)
+        with open("connections", "ab") as c:
+            c.write(cid+lib.newline)
         
         # Responds according to BEP15 with the connection_id
         socket.sendto(data[8:] + cid, self.client_address)

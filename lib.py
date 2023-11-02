@@ -47,6 +47,7 @@ started = rev_b(ctypes.c_int32(2))
 stopped = rev_b(ctypes.c_int32(3))
 error = stopped
 interval = rev_b(ctypes.c_int32(60))
+newline = bytes("\n", "utf-8")
     
 # Events of client announce requests
 event = {
