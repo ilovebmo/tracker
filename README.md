@@ -10,6 +10,7 @@
 - Authentication
 - CLI
 
-**GUI**:\n
+**GUI**:
+
 Simply download the GUI application and run it to start the server.
 Add the tracker to your torrents as "udp://HOST:PORT/announce".
