@@ -166,6 +166,7 @@ class UDPT(socketserver.BaseRequestHandler):
         # Sends response
         socket.sendto(response, self.client_address)
     
+    # Method for handling errors
     def _error(self, t_id: bytes, socket: socketserver.socket, msg=b"Something went wrong"):
         socket.sendto(lib.error+t_id+msg, self.client_address)
     
