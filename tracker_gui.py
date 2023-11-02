@@ -25,42 +25,48 @@ class UDPT(socketserver.BaseRequestHandler):
     
     # The handle method
     def handle(self):
-        
         # Gets the data from the client request and the client socket to respond
         data = self.request[0].strip()
         socket = self.request[1]
+        host_port = f"{self.client_address[0]}:{self.client_address[1]}"
 
         # Check if it's a connection request
-        if data[:12] == lib.protocol_id + lib.connect:
-            # Connects
-            self._connect(data, socket)
+        if self._connect(data, socket):
+            logging.info(f" {host_port} has connected.")
             return
 
-        # Gets the connections from the file
-        connections = []
-        with open("connections", "rb") as c:
-            for n in c.read().split(lib.newline)[:-1]:
-                connections.append(n)
-                
-        # Checks if it's a valid connection_id
-        if data[:8] in connections:
-            # Checks if it's an announce request
-            if data[8:12] == lib.announce:
-                # Announces
-                self._announce(data, socket)
+        # Handles other requests
+        match self._service(data, socket):
+            case lib.Requests.announced:
+                logging.info(f" {host_port} has announced.")
                 return
-            
-            if data[8:12] == lib.scrape:
-                self._scrape(data, socket)
+            case lib.Requests.completed:
+                logging.info(f" {host_port} has completed.")
                 return
-            
-            else:
-                # If it's something different, it's an error
-                self._error(data[12:16], socket)
-                logging.warn(f" {self.client_address[0]}:{self.client_address[1]} caused an error.\n")
+            case lib.Requests.started:
+                logging.info(f" {host_port} has started.")
+                return
+            case lib.Requests.stopped:
+                logging.info(f" {host_port} has stopped.")
+                return
+            case lib.Requests.scraped:
+                logging.info(f" {host_port} has scraped.")
+                return
+            case lib.Requests.error:
+                logging.warn(f" {host_port} has caused an error.")
+                return
+            case lib.Requests.invalid:
+                logging.warn(f" {host_port} used an invalid connection_id.")
+                return
+            case _:
+                logging.warn(f" {host_port} caused something odd to happen...")
 
     # Method for handling the initial connection
-    def _connect(self, data: bytes, socket: socketserver.socket):
+    def _connect(self, data: bytes, socket: socketserver.socket) -> bool:
+        # Check if it's a connection request
+        if data[:12] != lib.protocol_id + lib.connect:
+            return False
+        
         # Creates a random connection_id and stores it in the connections file
         cid = lib.connection_id()
         with open("connections", "ab") as c:
@@ -68,67 +74,61 @@ class UDPT(socketserver.BaseRequestHandler):
         
         # Responds according to BEP15 with the connection_id
         socket.sendto(data[8:] + cid, self.client_address)
+        return True
 
+    # Assemble connection_ids
+    def _service(self, data: bytes, socket: socketserver.socket) -> str:
+        # Gets the connections from the file
+        connections = []
+        with open("connections", "rb") as c:
+            for n in c.read().split(lib.newline)[:-1]:
+                connections.append(n)
+        
+        # Checks if it's a valid connection_id
+        if data[:8] not in connections:
+            return "invalid"
+        
+        # Directs the data
+        match data[8:12]:
+            case lib.IDs.announce:
+                return self._announce(data, socket)
+            case lib.IDs.scrape:
+                return self._scrape(data, socket)
+            case _:
+                self._error(data[12:16], socket)
+                return "error"
+    
     # Method for handling announce requests
-    def _announce(self, data: bytes, socket: socketserver.socket):
+    def _announce(self, data: bytes, socket: socketserver.socket) -> str:
         # Creates a Peer object using the info provided by the client
-        peer = lib.Peer(
-            data[16:36],
-            data[36:56],
-            data[56:64],
-            data[64:72],
-            data[72:80],
-            data[80:84],
-            data[84:88],
-            data[88:92],
-            data[92:96],
-            data[96:98],
-            data[98:],
-        )
+        peer = lib.Peer(data)
         
         # Gets the torrents from the file
-        try:
-            with open("torrents.pkl", "rb") as t:
-                torrents = pickle.load(t)
-        except (FileNotFoundError, EOFError):
-            torrents = {}
-
-        # Console and logging
-        print(
-            f"{self.client_address[0]}:{self.client_address[1]} has {lib.event[peer.event]}.\n"
-        )
-        logging.info(f" {self.client_address[0]}:{self.client_address[1]} has {lib.event[peer.event]}.\n")
+        torrents = lib.get_torrents()
 
         # If no IP was provided by the client, use the socket address
         if peer.IP == lib.zero_32:
             peer.IP = lib.ip_32(self.client_address[0])
 
-        # Checks if the info_hash was in the torrents dictionary
-        if peer.info_hash in torrents.keys():
-            # Checks if the peer_id is already in the database
-            if peer.peer_id in torrents[data[16:36]].keys():
-                # Update peer in database
-                torrents[data[16:36]][peer.peer_id] = peer
-                
-        else:
-            # If peer isn't in the database, add it
-            torrents.update({data[16:36]: {peer.peer_id: peer}})
+        # Updates torrents based on Peer
+        torrents = lib.peer_torrent(peer, torrents)
 
         # Constructs UDP response according to BEP15
         response = data[8:16] + lib.interval + self._leechers(peer.info_hash, torrents) + self._seeders(peer.info_hash, torrents)
         # Adds IPs and ports of connected peers to the response
-        for p in torrents[data[16:36]].values():
+        for p in torrents[peer.info_hash].values():
             response += p.IP + p.port
 
         # Stores torrents state
-        with open("torrents.pkl", "wb") as t:
-            pickle.dump(torrents, t, pickle.HIGHEST_PROTOCOL)
+        lib.up_torrents(torrents)
         
         # Sends response
         socket.sendto(response, self.client_address)
+        
+        return lib.event[peer.event]
 
     # Method for handling scrape requests
-    def _scrape(self, data: bytes, socket: socketserver.socket):
+    def _scrape(self, data: bytes, socket: socketserver.socket) -> str:
         # Get all the info_hashes
         to_scrape = len(data[16:])/20
         
@@ -141,11 +141,7 @@ class UDPT(socketserver.BaseRequestHandler):
             infos.append(data[16+20*t:16+20*(t+1)])
         
         # Gets the torrents from the file
-        try:
-            with open("torrents.pkl", "rb") as t:
-                torrents = pickle.load(t)
-        except (FileNotFoundError, EOFError):
-            torrents = {}
+        torrents = lib.get_torrents()
         
         # Construct a response
         response = data[8:16]
@@ -156,22 +152,21 @@ class UDPT(socketserver.BaseRequestHandler):
                 response += self._leechers(i, torrents) + lib.zero_32 + self._seeders(i, torrents)
             except:
                 pass
-            
-        # Console and logging
-        print(
-            f"{self.client_address[0]}:{self.client_address[1]} has scraped.\n"
-        )
-        logging.info(f" {self.client_address[0]}:{self.client_address[1]} has scraped.\n")
         
         # Sends response
         socket.sendto(response, self.client_address)
+        
+        return "scraped"
     
     # Method for handling errors
     def _error(self, t_id: bytes, socket: socketserver.socket, msg=b"Something went wrong"):
         socket.sendto(lib.error+t_id+msg, self.client_address)
     
     # Method for counting leechers
-    def _leechers(self, info_hash: bytes, torrents: dict):
+    def _leechers(self, info_hash: bytes, torrents: dict) -> bytes:
+        """
+        Counts leechers.
+        """
         _leech = 0
         
         # If there's still data left, the file isn't completed, therefore it's a leech
@@ -182,7 +177,10 @@ class UDPT(socketserver.BaseRequestHandler):
         return lib.rev_b(lib.make32(_leech))
 
     # Method for counting seeders
-    def _seeders(self, info_hash: bytes, torrents: dict):
+    def _seeders(self, info_hash: bytes, torrents: dict) -> bytes:
+        """
+        Counts seeders.
+        """
         _seed = 0
         
         # If there's no data left, the file isn't completed, therefore it's a seed
