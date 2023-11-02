@@ -57,7 +57,7 @@ class UDPT(socketserver.BaseRequestHandler):
             else:
                 # If it's something different, it's an error
                 self._error(data[12:16], socket)
-                logging.warn(" {self.client_address[0]}:{self.client_address[1]} caused an error.\n")
+                logging.warn(f" {self.client_address[0]}:{self.client_address[1]} caused an error.\n")
 
     # Method for handling the initial connection
     def _connect(self, data: bytes, socket: socketserver.socket):
