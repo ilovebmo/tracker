@@ -1,18 +1,15 @@
-import logging, socketserver, threading, lib
+import logging, socketserver, threading, lib, pickle
 import tkinter as tk
 
 
 #
 #
 #
-# Basic setup
+# Logging setup
 #
 
 # Logging to logging.log
 logging.basicConfig(filename='logging.log', encoding='utf-8', level=logging.INFO)
-
-# Torrents dictionary, stores info_hashes as keys, which map to a dictionary of structure peer_id: Peer
-torrents = {}
 
 #
 #
@@ -86,6 +83,13 @@ class UDPT(socketserver.BaseRequestHandler):
             data[96:98],
             data[98:],
         )
+        
+        # Gets the torrents from the file
+        try:
+            with open("torrents.pkl", "rb") as t:
+                torrents = pickle.load(t)
+        except (FileNotFoundError, EOFError):
+            torrents = {}
 
         # Console and logging
         print(
@@ -109,16 +113,20 @@ class UDPT(socketserver.BaseRequestHandler):
             torrents.update({data[16:36]: {peer.peer_id: peer}})
 
         # Constructs UDP response according to BEP15
-        response = data[8:16] + lib.interval + self._leechers(data) + self._seeders(data)
+        response = data[8:16] + lib.interval + self._leechers(data, torrents) + self._seeders(data, torrents)
         # Adds IPs and ports of connected peers to the response
         for p in torrents[data[16:36]].values():
             response += p.IP + p.port
 
+        # Stores torrents state
+        with open("torrents.pkl", "wb") as t:
+            pickle.dump(torrents, t, pickle.HIGHEST_PROTOCOL)
+        
         # Sends response
         socket.sendto(response, self.client_address)
 
     # Method for counting leechers
-    def _leechers(self, data: bytes):
+    def _leechers(self, data: bytes, torrents: dict):
         _leech = 0
         
         # If there's still data left, the file isn't completed, therefore it's a leech
@@ -129,7 +137,7 @@ class UDPT(socketserver.BaseRequestHandler):
         return lib.rev_b(lib.make32(_leech))
 
     # Method for counting seeders
-    def _seeders(self, data: bytes):
+    def _seeders(self, data: bytes, torrents: dict):
         _seed = 0
         
         # If there's no data left, the file isn't completed, therefore it's a seed
