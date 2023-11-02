@@ -44,6 +44,7 @@ zero = rev_b(ctypes.c_int64(0))
 zero_32 = rev_b(ctypes.c_int32(0))
 announce = rev_b(ctypes.c_int32(1))
 started = rev_b(ctypes.c_int32(2))
+scrape = started
 stopped = rev_b(ctypes.c_int32(3))
 error = stopped
 interval = rev_b(ctypes.c_int32(60))

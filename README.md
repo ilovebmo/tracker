@@ -3,10 +3,10 @@
 **Features:**
 - GUI
 - HOST:PORT selection
+- Scraping
 - logging
 
 **Soon:**
-- Scraping
 - Authentication
 - CLI
 

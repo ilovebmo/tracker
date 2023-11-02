@@ -50,6 +50,10 @@ class UDPT(socketserver.BaseRequestHandler):
                 self._announce(data, socket)
                 return
             
+            if data[8:12] == lib.scrape:
+                self._scrape(data, socket)
+                return
+            
             else:
                 # Currently there's no scrape support, so it sends an error packet
                 socket.sendto(
@@ -113,7 +117,7 @@ class UDPT(socketserver.BaseRequestHandler):
             torrents.update({data[16:36]: {peer.peer_id: peer}})
 
         # Constructs UDP response according to BEP15
-        response = data[8:16] + lib.interval + self._leechers(data, torrents) + self._seeders(data, torrents)
+        response = data[8:16] + lib.interval + self._leechers(peer.info_hash, torrents) + self._seeders(peer.info_hash, torrents)
         # Adds IPs and ports of connected peers to the response
         for p in torrents[data[16:36]].values():
             response += p.IP + p.port
@@ -125,23 +129,53 @@ class UDPT(socketserver.BaseRequestHandler):
         # Sends response
         socket.sendto(response, self.client_address)
 
+    # Method for handling scrape requests
+    def _scrape(self, data: bytes, socket: socketserver.socket):
+        # Get all the info_hashes
+        to_scrape = len(data[16:])/20
+        
+        # Max number of scrapes is 74
+        if to_scrape > 74:
+            raise ValueError
+        
+        infos = []
+        for t in range(n):
+            infos.append(data[16+20*t:16+20*(t+1)])
+        
+        # Gets the torrents from the file
+        try:
+            with open("torrents.pkl", "rb") as t:
+                torrents = pickle.load(t)
+        except (FileNotFoundError, EOFError):
+            torrents = {}
+        
+        # Construct a response
+        response = data[8:16]
+        for t in infos:
+            # In case there's an info_hash requested that isn't in the database
+            try:
+                # Haven't implemented times-downloaded so just send 0
+                response += self._leechers(i, torrents) + lib.zero_32 + self._seeders(i, torrents)
+            except:
+                pass
+    
     # Method for counting leechers
-    def _leechers(self, data: bytes, torrents: dict):
+    def _leechers(self, info_hash: bytes, torrents: dict):
         _leech = 0
         
         # If there's still data left, the file isn't completed, therefore it's a leech
-        for p in torrents[data[16:36]].values():
+        for p in torrents[info_hash].values():
             if p.left != lib.zero:
                 _leech += 1
 
         return lib.rev_b(lib.make32(_leech))
 
     # Method for counting seeders
-    def _seeders(self, data: bytes, torrents: dict):
+    def _seeders(self, info_hash: bytes, torrents: dict):
         _seed = 0
         
         # If there's no data left, the file isn't completed, therefore it's a seed
-        for p in torrents[data[16:36]].values():
+        for p in torrents[info_hash].values():
             if p.left == lib.zero:
                 _seed += 1
 
