@@ -82,7 +82,5 @@ def gethost() -> str:
     return gethostbyname(gethostname())
 
 def UDPTstart(HOST: str = gethost(), PORT: int = 1212):
-    print("IM HERE")
     with socketserver.UDPServer((HOST, PORT), UDPT) as server:
         server.serve_forever()
-    print("QUIT")
