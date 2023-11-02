@@ -1,4 +1,4 @@
-import threading, socketserver, lib, logging
+import threading, socketserver, lib, logging, meipass_get
 import tkinter as tk
 from socket import gethostbyname, gethostname
 from ctypes import c_int32
@@ -124,6 +124,7 @@ def get_HOST_PORT(*event: tk.Event):
 root = tk.Tk()
 root.title("gon's UDPT server implementation")
 root.resizable(width=False, height=False)
+root.iconbitmap(lib.resource_path("util/icon.ico"))
 
 mainframe = tk.Frame(root)
 mainframe.grid(column=0, row=0, sticky="nwes")
