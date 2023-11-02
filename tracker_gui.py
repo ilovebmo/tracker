@@ -55,11 +55,9 @@ class UDPT(socketserver.BaseRequestHandler):
                 return
             
             else:
-                # Currently there's no scrape support, so it sends an error packet
-                socket.sendto(
-                    lib.stopped + data[12:16] + b"No scraping!", self.client_address
-                )
-                logging.warn(" {self.client_address[0]}:{self.client_address[1]} tried to scrape.\n")
+                # If it's something different, it's an error
+                self._error(data[12:16], socket)
+                logging.warn(" {self.client_address[0]}:{self.client_address[1]} caused an error.\n")
 
     # Method for handling the initial connection
     def _connect(self, data: bytes, socket: socketserver.socket):
@@ -167,6 +165,9 @@ class UDPT(socketserver.BaseRequestHandler):
         
         # Sends response
         socket.sendto(response, self.client_address)
+    
+    def _error(self, t_id: bytes, socket: socketserver.socket, msg=b"Something went wrong"):
+        socket.sendto(lib.error+t_id+msg, self.client_address)
     
     # Method for counting leechers
     def _leechers(self, info_hash: bytes, torrents: dict):
