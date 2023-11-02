@@ -47,7 +47,7 @@ class UDPT(socketserver.BaseRequestHandler):
             # Checks if it's an announce request
             if data[8:12] == lib.announce:
                 # Announces
-                self.announce(data, socket)
+                self._announce(data, socket)
                 return
             
             else:
@@ -68,7 +68,7 @@ class UDPT(socketserver.BaseRequestHandler):
         socket.sendto(data[8:] + cid, self.client_address)
 
     # Method for handling announce requests
-    def announce(self, data: bytes, socket: socketserver.socket):
+    def _announce(self, data: bytes, socket: socketserver.socket):
         # Creates a Peer object using the info provided by the client
         peer = lib.Peer(
             data[16:36],
@@ -105,7 +105,7 @@ class UDPT(socketserver.BaseRequestHandler):
         if peer.info_hash in torrents.keys():
             # Checks if the peer_id is already in the database
             if peer.peer_id in torrents[data[16:36]].keys():
-                # Updates state of peer
+                # Update peer in database
                 torrents[data[16:36]][peer.peer_id] = peer
                 
         else:
