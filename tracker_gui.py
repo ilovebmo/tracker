@@ -158,6 +158,15 @@ class UDPT(socketserver.BaseRequestHandler):
                 response += self._leechers(i, torrents) + lib.zero_32 + self._seeders(i, torrents)
             except:
                 pass
+            
+        # Console and logging
+        print(
+            f"{self.client_address[0]}:{self.client_address[1]} has scraped.\n"
+        )
+        logging.info(f" {self.client_address[0]}:{self.client_address[1]} has scraped.\n")
+        
+        # Sends response
+        socket.sendto(response, self.client_address)
     
     # Method for counting leechers
     def _leechers(self, info_hash: bytes, torrents: dict):
