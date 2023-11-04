@@ -5,10 +5,10 @@
 - HOST:PORT selection
 - Scraping
 - logging
+- CLI
 
 **Soon:**
 - Authentication
-- CLI
 
 **GUI**:
 
