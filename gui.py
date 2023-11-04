@@ -19,6 +19,7 @@ logging.basicConfig(filename="logging.log", encoding="utf-8", level=logging.INFO
 # Tkinter GUI
 #
 
+
 class GUI:
     def __init__(self):
         self.root = tk.Tk()
@@ -47,7 +48,9 @@ class GUI:
         tk.Label(self.mainframe, text="PORT").grid(column=0, row=1, sticky="nswe")
 
         # Button to start server
-        self.start_button = tk.Button(self.mainframe, text="Start", command=self.get_HOST_PORT)
+        self.start_button = tk.Button(
+            self.mainframe, text="Start", command=self.get_HOST_PORT
+        )
         self.start_button.grid(columnspan=2, row=2, sticky="nsew")
 
         # Info Label for server
@@ -62,15 +65,15 @@ class GUI:
         # Bind so that you don't actually need to click the button to start the server
         self.root.bind("<Return>", self.get_HOST_PORT)
         self.root.mainloop()
-    
+
     def stop_server(self, *event: tk.Event):
         self.server.shutdown()
         self.info.configure(text="Server is not not running.\nLogging: logging.log")
         self.start_button.configure(text="Start", command=self.get_HOST_PORT)
         self.get_HOST.configure(state=tk.NORMAL)
         self.get_PORT.configure(state=tk.NORMAL)
-    
-    def get_HOST_PORT(self, *event: tk.Event):        
+
+    def get_HOST_PORT(self, *event: tk.Event):
         # Get the PORT
         PORT_NU = self.PORT.get()
         try:
@@ -103,15 +106,17 @@ class GUI:
         except Exception:
             self.info.configure(text="Server couldn't start.\nPORTs can't be reused.")
             return
-        
+
         # Unbinds the starting server input
         self.start_button.configure(command=self.stop_server, text="Stop")
 
         self.get_HOST.configure(state=tk.DISABLED)
         self.get_PORT.configure(state=tk.DISABLED)
-        
+
         # Updates the information about the server
-        self.info.configure(text=f"{HOST_IP}:{self.server.server_address[1]}\nLogging: logging.log")
+        self.info.configure(
+            text=f"{HOST_IP}:{self.server.server_address[1]}\nLogging: logging.log"
+        )
         self.PORT.set(self.server.server_address[1])
 
 
