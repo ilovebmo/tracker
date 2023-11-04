@@ -1,6 +1,6 @@
 import logging, socketserver, threading
 import tkinter as tk
-from util.tracker import UDPT
+from util.tracker import UDPT, authUDPT
 import util.lib as lib
 
 
@@ -46,12 +46,16 @@ class GUI:
         self.get_PORT = tk.Entry(self.mainframe, textvariable=self.PORT)
         self.get_PORT.grid(column=1, row=1, sticky="nswe")
         tk.Label(self.mainframe, text="PORT").grid(column=0, row=1, sticky="nswe")
+        
+        # Input for Auth
+        self.AUTH = tk.IntVar()
+        tk.Checkbutton(self.mainframe, text="AUTH", variable=self.AUTH).grid(column=0, row=2)
 
         # Button to start server
         self.start_button = tk.Button(
             self.mainframe, text="Start", command=self.get_HOST_PORT
         )
-        self.start_button.grid(columnspan=2, row=2, sticky="nsew")
+        self.start_button.grid(column=1, row=2, sticky="nsew")
 
         # Info Label for server
         self.info = tk.Label(
@@ -99,9 +103,14 @@ class GUI:
             HOST_IP = lib.gethost()
             self.HOST.set(HOST_IP)
 
+        if self.AUTH.get():
+            HandlerClass = authUDPT
+        else:
+            HandlerClass = UDPT
+        
         # Starts the server
         try:
-            self.server = socketserver.UDPServer((HOST_IP, PORT_NU), UDPT)
+            self.server = socketserver.UDPServer((HOST_IP, PORT_NU), HandlerClass)
             threading.Thread(target=self.server.serve_forever, daemon=True).start()
         except Exception:
             self.info.configure(text="Server couldn't start.\nPORTs can't be reused.")

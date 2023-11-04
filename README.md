@@ -9,7 +9,7 @@ Have **YOU** ever wanted to host your very own UDP Tracker Server on Windows? Do
 👶 Simple instalation using **batch**.  
 📢 Full-fledged **Announcements** and **scraping** implementations.  
 📜 Comprehensive **logging** and **storage**.  
-🧑‍🤝‍🧑 **User** registry and **authentication** *(only in CLI version)*.  
+🧑‍🤝‍🧑 **User** registry and **authentication**.  
 🛜 **Automatic** `HOST:PORT` selection.
 
 ## It's **so** simple, you just *can't go wrong*!
