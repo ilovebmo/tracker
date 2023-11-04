@@ -1,4 +1,5 @@
-import logging, socketserver, threading, keyboard, os
+import logging, socketserver, threading, os
+from pynput.keyboard import Listener
 from sys import exit
 from util.tracker import UDPT
 import util.lib as lib
@@ -38,31 +39,30 @@ class CLI:
         self.d_cont = self.CONT
         
         self.running = False
-        self.handler()
+        self.display()
+        self.listener = Listener(on_press=self.handler)
+        with self.listener as listener:
+            listener.join()
     
-    def handler(self):
+    def handler(self, key):
         self.d_cont = self.CONT
         self.d_host = self.HOST
         self.d_port = self.PORT
         self.display()
-        while True:
-            event = keyboard.read_event(suppress=True)
-            if event.event_type != keyboard.KEY_DOWN:
-                continue
-            if event.name not in ["up", "down", "enter", "esc"]:
-                continue
-            
-            if event.name == "up":
-                self.select_host()
-            elif event.name == "down":
-                self.select_port()
-            elif event.name == "esc":
-                if not self.running:
-                    exit()
-                else:
-                    self.stop()
+        if str(key) not in ["Key.up", "Key.down", "Key.enter", "Key.esc"]:
+            return
+        
+        if str(key) == "Key.up":
+            self.select_host(key)
+        elif str(key) == "Key.down":
+            self.select_port(key)
+        elif str(key) == "Key.esc":
+            if not self.running:
+                exit()
             else:
-                self.start()
+                self.stop()
+        else:
+            self.start()
 
     def display(self):
         os.system("cls")
@@ -73,63 +73,57 @@ class CLI:
         
 {self.d_cont}""")
         
-    def select_host(self):
+    def select_host(self, key):
         self.d_port = self.PORT
         self.d_cont = self.CONT
         self.update_d_host()
         self.display()
-        while True:
-            event = keyboard.read_event(suppress=True)
-            if event.event_type != keyboard.KEY_DOWN:
-                continue
-            if event.name not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ".", "backspace", "enter", "esc"]:
-                continue
-            
-            if event.name == "backspace":
-                self.HOST = self.HOST[:-1]
-            elif event.name == "enter" or event.name == "esc":
-                self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
+        if self.make_string(key) not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ".", "Key.backspace", "Key.enter", "Key.esc"]:
+            self.listener.on_press=self.select_host
+            return
+        
+        if str(key) == "Key.backspace":
+            self.HOST = self.HOST[:-1]
+        elif str(key) == "Key.enter" or str(key) == "Key.esc":
+            self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
 ↑ edit HOST : ↓ edit PORT
 (enter to Start : esc to Exit)"""
-                self.d_cont = self.CONT
-                self.display()
-                break
-            else:
-                self.HOST += event.name
-            
-            self.update_d_host()
+            self.d_cont = self.CONT
+            self.d_host = self.HOST
             self.display()
-
-        self.handler()
+            self.listener.on_press=self.handler
+            return
+        else:
+            self.HOST += self.make_string(key)
+        
+        self.update_d_host()
+        self.display()
     
-    def select_port(self):
+    def select_port(self, key):
         self.d_host = self.HOST
         self.d_cont = self.CONT
         self.update_d_port()
         self.display()
-        while True:
-            event = keyboard.read_event(suppress=True)
-            if event.event_type != keyboard.KEY_DOWN:
-                continue
-            if event.name not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "backspace", "enter", "esc"]:
-                continue
-            
-            if event.name == "backspace":
-                self.PORT = self.PORT[:-1]
-            elif event.name == "enter" or event.name == "esc":
-                self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
+        if self.make_string(key) not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Key.backspace", "Key.enter", "Key.esc"]:
+            self.listener.on_press=self.select_port
+            return
+        
+        if str(key) == "Key.backspace":
+            self.PORT = self.PORT[:-1]
+        elif str(key) == "Key.enter" or str(key) == "Key.esc":
+            self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
 ↑ edit HOST : ↓ edit PORT
 (enter to Start : esc to Exit)"""
-                self.d_cont = self.CONT
-                self.display()
-                break
-            else:
-                self.PORT += event.name
-            
-            self.update_d_port()
+            self.d_cont = self.CONT
+            self.d_port = self.PORT
             self.display()
-
-        self.handler()
+            self.listener.on_press=self.handler
+            return
+        else:
+            self.PORT += self.make_string(key)
+        
+        self.update_d_port()
+        self.display()
         
     def update_d_host(self):
         self.d_host = self.s_sel+self.HOST+self.e_sel
@@ -140,6 +134,12 @@ class CLI:
         self.d_port = self.s_sel+self.PORT+self.e_sel
         self.CONT = f"Start server on {self.HOST}:{self.s_sel+self.PORT+self.e_sel}?\n(enter to Confirm : esc to Return)"
         self.d_cont = self.CONT
+        
+    def make_string(self, key) -> str:
+        if len(str(key)) == 3:
+            return str(key)[1]
+        else:
+            return str(key)
     
     def start(self):
         try:
