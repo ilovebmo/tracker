@@ -37,7 +37,7 @@ class CLI:
         self.d_auth = self.s_sel + "off" + self.e_sel
 
         self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
-↑ edit HOST : ↓ edit PORT
+↑ edit HOST : ↓ edit PORT : a toggle AUTH
 (enter to Start : esc to Exit)"""
         self.d_cont = self.CONT
 
@@ -123,7 +123,7 @@ class CLI:
             self.HOST = self.HOST[:-1]
         elif str(key) == "Key.enter" or str(key) == "Key.esc":
             self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
-↑ edit HOST : ↓ edit PORT
+↑ edit HOST : ↓ edit PORT : a toggle AUTH
 (enter to Start : esc to Exit)"""
             self.d_cont = self.CONT
             self.d_host = self.HOST
@@ -163,7 +163,7 @@ class CLI:
             self.PORT = self.PORT[:-1]
         elif str(key) == "Key.enter" or str(key) == "Key.esc":
             self.CONT = f"""Start server on {self.s_sel+self.HOST}:{self.PORT+self.e_sel}?
-↑ edit HOST : ↓ edit PORT
+↑ edit HOST : ↓ edit PORT : a toggle AUTH
 (enter to Start : esc to Exit)"""
             self.d_cont = self.CONT
             self.d_port = self.PORT

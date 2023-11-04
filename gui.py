@@ -49,7 +49,8 @@ class GUI:
         
         # Input for Auth
         self.AUTH = tk.IntVar()
-        tk.Checkbutton(self.mainframe, text="AUTH", variable=self.AUTH).grid(column=0, row=2)
+        self.get_AUTH = tk.Checkbutton(self.mainframe, text="AUTH", variable=self.AUTH)
+        self.get_AUTH.grid(column=0, row=2)
 
         # Button to start server
         self.start_button = tk.Button(
@@ -76,6 +77,7 @@ class GUI:
         self.start_button.configure(text="Start", command=self.get_HOST_PORT)
         self.get_HOST.configure(state=tk.NORMAL)
         self.get_PORT.configure(state=tk.NORMAL)
+        self.get_AUTH.configure(state="normal")
 
     def get_HOST_PORT(self, *event: tk.Event):
         # Get the PORT
@@ -121,6 +123,7 @@ class GUI:
 
         self.get_HOST.configure(state=tk.DISABLED)
         self.get_PORT.configure(state=tk.DISABLED)
+        self.get_AUTH.configure(state="disabled")
 
         # Updates the information about the server
         self.info.configure(
