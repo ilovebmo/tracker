@@ -5,7 +5,7 @@
 - HOST:PORT selection
 - Scraping
 - logging
-- CLI
+- CLI (EN/JP keyboard)
 
 **Soon:**
 - Authentication
