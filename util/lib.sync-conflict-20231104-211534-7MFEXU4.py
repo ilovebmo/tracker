@@ -47,10 +47,7 @@ def authenticate(addr: str, password: bytes) -> bool:
     if addr not in users.keys():
         return False
 
-    if (
-        bytes(hashlib.sha256(bytes(users[addr], "utf-8")).hexdigest(), "utf-8")
-        != password
-    ):
+    if bytes(hashlib.sha256(bytes(users[addr], "utf-8")).hexdigest(), "utf-8") != password:
         return False
 
     return True

@@ -46,7 +46,7 @@ class GUI:
         self.get_PORT = tk.Entry(self.mainframe, textvariable=self.PORT)
         self.get_PORT.grid(column=1, row=1, sticky="nswe")
         tk.Label(self.mainframe, text="PORT").grid(column=0, row=1, sticky="nswe")
-        
+
         # Input for Auth
         self.AUTH = tk.IntVar()
         self.get_AUTH = tk.Checkbutton(self.mainframe, text="AUTH", variable=self.AUTH)
@@ -109,7 +109,7 @@ class GUI:
             HandlerClass = authUDPT
         else:
             HandlerClass = UDPT
-        
+
         # Starts the server
         try:
             self.server = socketserver.UDPServer((HOST_IP, PORT_NU), HandlerClass)
