@@ -26,7 +26,39 @@ class Peer:
         self.port: bytes = data[96:98]
         self.auth: bytes = data[98:]
         
+# Useful types
+protocol_id = rev_b(ctypes.c_int64(0x41727101980))
+connect = rev_b(ctypes.c_int32(0))
+zero = rev_b(ctypes.c_int64(0))
+zero_32 = rev_b(ctypes.c_int32(0))
+announce = rev_b(ctypes.c_int32(1))
+completed = announce
+started = rev_b(ctypes.c_int32(2))
+scrape = started
+stopped = rev_b(ctypes.c_int32(3))
+error = stopped
+interval = rev_b(ctypes.c_int32(60))
+newline = bytes("\n", "utf-8")
 
+# Requests
+class Requests:
+    announced = "announced"
+    completed = "completed"
+    started = "started"
+    stopped = "stopped"
+    scraped = "scraped"
+    error = "error"
+    invalid = "invalid"
+    
+# Request Ids
+class IDs:
+    announce = announce
+    scrape = scrape
+    
+# Generates connection_ids
+def connection_id():
+    return rev_b(random.randbytes(8))
+        
 # Get torrents dict
 def get_torrents():
     """
@@ -87,20 +119,6 @@ def ip_32(s: str) -> bytes:
         + rev_b(ctypes.c_int8(int(s[2])))
         + rev_b(ctypes.c_int8(int(s[3])))
     )
-
-# Useful types
-protocol_id = rev_b(ctypes.c_int64(0x41727101980))
-connect = rev_b(ctypes.c_int32(0))
-zero = rev_b(ctypes.c_int64(0))
-zero_32 = rev_b(ctypes.c_int32(0))
-announce = rev_b(ctypes.c_int32(1))
-completed = announce
-started = rev_b(ctypes.c_int32(2))
-scrape = started
-stopped = rev_b(ctypes.c_int32(3))
-error = stopped
-interval = rev_b(ctypes.c_int32(60))
-newline = bytes("\n", "utf-8")
     
 # Events of client announce requests
 event = {
@@ -109,24 +127,3 @@ event = {
     started: "started",
     stopped: "stopped",
 }
-
-# Requests
-class Requests:
-    announced = "announced"
-    completed = "completed"
-    started = "started"
-    stopped = "stopped"
-    scraped = "scraped"
-    error = "error"
-    invalid = "invalid"
-    
-# Request Ids
-class IDs:
-    announce = announce
-    scrape = scrape
-
-
-# Generates connection_ids
-def connection_id():
-    return rev_b(random.randbytes(8))
-        
