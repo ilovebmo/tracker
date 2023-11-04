@@ -1,5 +1,6 @@
-import logging, socketserver, threading, lib, pickle
+import logging, socketserver, threading, pickle
 import tkinter as tk
+import lib
 
 
 #

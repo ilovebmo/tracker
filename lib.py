@@ -105,8 +105,6 @@ def resource_path(relative_path):
 def gethost() -> str:
     return gethostbyname(gethostname())
 
-
-
 # Makes int32_t
 def make32(num):
     return ctypes.c_int32(num)
