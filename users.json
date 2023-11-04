@@ -1,0 +1,5 @@
+{
+    "authorized_IP_1_user1": "password_user1",
+    "authorized_IP_2_user1": "password_user1",
+    "authorized_IP_1_user2": "password_user2"
+}
