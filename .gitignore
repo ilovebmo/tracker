@@ -1,0 +1,17 @@
+# Python
+__pycache__
+.venv
+
+# Pyinstaller
+build
+dist
+*.spec
+*.exe
+
+# Tracker data
+logging.log
+connections
+torrents.pkl
+
+# Testing
+test.py
